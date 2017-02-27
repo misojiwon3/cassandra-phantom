@@ -9,6 +9,7 @@ import com.cassandra.phantom.modeling.entity.Song
 import com.cassandra.phantom.modeling.service.SongsService
 import com.datastax.driver.core.utils.UUIDs
 import com.outworkers.phantom.streams._
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -28,13 +29,15 @@ import scala.concurrent.{Await, Future}
 object SongsStreaming extends ProductionDatabase with Connector.connector.Connector {
 
   def main(args: Array[String]) {
+    val log = LoggerFactory.getLogger(getClass)
 
+    println("#######################################################")
     database.truncate(10.seconds)
 
     val insert = Future.sequence(List(
-      SongsService.saveOrUpdate(Song(UUIDs.timeBased(), "Prison Song", "Toxicity", "System of a Down")),
-      SongsService.saveOrUpdate(Song(UUIDs.timeBased(), "Aerials", "Toxicity", "System of a Down")),
-      SongsService.saveOrUpdate(Song(UUIDs.timeBased(), "Toxicity", "Toxicity", "System of a Down"))
+      SongsService.saveOrUpdate(Song(UUIDs.timeBased(), "Pr1ison Song", "Toxicity", "System of a Down")),
+      SongsService.saveOrUpdate(Song(UUIDs.timeBased(), "Ae1rials", "Toxicity", "System of a Down")),
+      SongsService.saveOrUpdate(Song(UUIDs.timeBased(), "To1xicity", "Toxicity", "System of a Down"))
     ))
 
     val f = for {

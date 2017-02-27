@@ -3,13 +3,16 @@ package com.cassandra.phantom.modeling.test.service
 import com.cassandra.phantom.modeling.connector.Connector
 import com.cassandra.phantom.modeling.database.EmbeddedDatabase
 import com.cassandra.phantom.modeling.entity.Song
+import com.cassandra.phantom.modeling.service.SongsService
 import com.cassandra.phantom.modeling.test.utils.CassandraSpec
+
 import com.datastax.driver.core.utils.UUIDs
 import com.outworkers.phantom.dsl.ResultSet
 import com.websudos.util.testing.{Sample, _}
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
 /**
@@ -18,9 +21,9 @@ import scala.concurrent.duration._
   * Before executing it will create all necessary tables in our embedded cassandra
   * validating our model with the requirements described in the readme.md file
   */
-class SongsTest extends CassandraSpec with EmbeddedDatabase with Connector.testConnector.Connector {
+class SongsTest extends CassandraSpec with EmbeddedDatabase with Connector.connector.Connector {
 
-  /**
+  /**show
     * When extending your database in this case [[EmbeddedDatabase]]
     * you can access different methods related to your database such as
     * autocreate(), autodrop() and autotruncate() that create,
@@ -45,9 +48,14 @@ class SongsTest extends CassandraSpec with EmbeddedDatabase with Connector.testC
     }
   }
 
+  val log = LoggerFactory.getLogger(getClass)
+
+  log.info(s"#######################################################")
+
   "A Song" should "be inserted into cassandra" in {
-    val sample = gen[Song]
-    val future = this.store(sample)
+    val sample: Song = gen[Song]
+    println(sample)
+    val future: Future[ResultSet] = this.store(sample)
 
     whenReady(future) { result =>
       result isExhausted() shouldBe true
@@ -56,10 +64,31 @@ class SongsTest extends CassandraSpec with EmbeddedDatabase with Connector.testC
     }
   }
 
+  it should "insert a song row" in {
+    println("### executed")
+    val s = Song(UUIDs.timeBased(), "Knock Knock1", "second, 2017", "Twice")
+    val song: Future[ResultSet] = SongsService.saveOrUpdate(s)
+
+    whenReady(song) { res =>
+      res isExhausted() shouldBe true
+      this.drop(s)
+    }
+  }
+
+  it should "delete a song" in {
+    val s = Song(UUIDs.timeBased(), "Knock Knock1", "second, 2017", "Twice")
+    val song = SongsService.delete(s)
+
+    whenReady(song) { res =>
+      res isExhausted() shouldBe defined
+      this.drop(s)
+    }
+  }
+
   it should "find a song by id" in {
     val sample = gen[Song]
 
-    val chain = for {
+    val chain: Future[Option[Song]] = for {
       store <- this.store(sample)
       get <- database.songsModel.getBySongId(sample.id)
       delete <- this.drop(sample)

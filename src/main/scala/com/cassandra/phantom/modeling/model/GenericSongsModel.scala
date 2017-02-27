@@ -10,7 +10,7 @@ import scala.concurrent.Future
 /**
   * Create the Cassandra representation of the Songs table
   */
-class SongsModel extends CassandraTable[ConcreteSongsModel, Song] {
+class SongsModel extends CassandraTable[ConcreteSongsModel, Song] { // CassandraTable[methods for this model, model(case class)]
 
   override def tableName: String = "songs"
 
